@@ -9,22 +9,27 @@ request.onupgradeneeded = function(event){
 request.onsuccess = function(event){
     db = event.target.result;
     if (navigator.onLine){
-        uploadPage()
+        uploadData()
     }
+}
+request.onerror = function(event) {
+    console.log(event.target.errorCode);
 }
 
 function saveRecord(record){
-    const entry = db.entry(['new_budget'], 'readwrite')
-    const entryObjectStore = entry.objectStore('new_budget')
-    entryObjectStore.add(record)
+    const transaction = db.transaction(['new_budget'], 'readwrite')
+    const transactionObjectStore = transaction.objectStore('new_budget')
+    transactionObjectStore.add(record)
 }
 function uploadData(){
-    const entry = db.entry(['new_budget'], 'readwrite')
-    const entryObjectStore = entry.objectStore('new_budget')
-    getAll.onsuccess = entryObjectStore.getAll()
+    const transaction = db.transaction(['new_budget'], 'readwrite')
+    const transactionObjectStore = transaction.objectStore('new_budget')
+    const getAll = transactionObjectStore.getAll()
+
 
     getAll.onsuccess=function(){
         if(getAll.result.length > 0){
+            console.log('success!')
             fetch('/api/transaction',{
                 method: 'POST',
                 body: JSON.stringify(getAll.result),
@@ -38,9 +43,9 @@ function uploadData(){
                 if (serverResponse.message){
                     throw new Error(serverResponse);
                 }
-                const entry = db.entry(['new_budget'], 'readwrite')
-                const entryObjectStore = entry.objectStore('new_budget')
-                entryObjectStore.clear()
+                const transaction = db.transaction(['new_budget'], 'readwrite')
+                const transactionObjectStore = transaction.objectStore('new_budget')
+                transactionObjectStore.clear()
             })
             .catch(err=>{console.log(err)})
         }
